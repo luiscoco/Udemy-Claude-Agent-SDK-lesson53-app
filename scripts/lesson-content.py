@@ -13,7 +13,7 @@ body=''
 for i,(title,explanation,code) in enumerate(runsteps,1):body+=f'<section class="step" id="run-step-{i}"><span class="number">{i:02}</span><h2>{title}</h2><p>{explanation}</p>'+snippet(code,'powershell')+'</section>'
 body+='<section class="step"><h2>Your private .env</h2>'+snippet(env,'dotenv')+'<p>Keep the key private, restart after edits, and preserve an existing file. Existing shell values take precedence. If the port is occupied, change PORT.</p></section>'
 document('/run.html','Configure and <em>run the app.</em>','Install, configure privately and inspect the nine experiments.',body)
-steps=[];arrows=[];lanes=['Reviewer UI','TypeScript host','Agent SDK / MCP','Local helpdesk JSON','Evidence / host']
+steps=[];arrows=[];lanes=['Reviewer UI','TypeScript host','Agent SDK / MCP','Helpdesk JSON','Evidence / host']
 for n,(title,source,anchor,explanation,a,b,count) in enumerate(specs,1):
  text=(APP/source).read_text(encoding='utf-8');lines=text.splitlines();idx=next(i for i,l in enumerate(lines) if anchor in l)
  code='\n'.join(lines[idx:idx+count]).strip()
