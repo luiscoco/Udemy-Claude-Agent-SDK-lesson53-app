@@ -1,0 +1,104 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Agent SDK LESSON 53 · How the app &lt;em&gt;was built.&lt;/em&gt;</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/code-highlighting.css"></head><body><main><div class="brand"><a href="/">How <span>Claude Agent SDK</span> Works</a><span class="badge">LESSON 53 / SUPPORT TRIAGE</span></div><header class="hero"><div><div class="eyebrow">READ · TRIAGE · APPROVE</div><h1>How the app <em>was built.</em></h1><p class="lead">Every architecture step has matching coloured TypeScript.</p></div><img src="/astronaut.png" alt="Course astronaut mascot"></header><nav class="nav" aria-label="Application sections"><a href="/">Application lab</a><a href="/learn.html">What you will learn</a><a href="/run.html">How to run</a><a href="/architecture.html">Architecture & workflow</a><a href="/walkthrough.html" aria-current="page">Code walkthrough</a><button id="theme" type="button">Dark mode</button></nav><div class="grid"><article class="card"><span class="number">01</span><h3>Fictional helpdesk boundary</h3><p>Four genuine in-process MCP tools read and mutate local classroom JSON. send_reply records a local fixture entry; there is no real email transport or external helpdesk API. A production adapter would need separate authentication, idempotency, delivery tracking and authenticated reviewers.</p></article><article class="card"><span class="number">02</span><h3>Permission ordering</h3><p>Bare allowedTools entries may bypass canUseTool. The sender is excluded; default permission mode falls through to the callback. The tool handler also consumes an exact one-use ticket/body grant so an unintended permission bypass cannot record an unapproved reply.</p></article><article class="card"><span class="number">03</span><h3>Edited input</h3><p>The decision route accepts body edits but no ticketId. canUseTool returns the original ticket ID and reviewed body in updatedInput. The handler verifies that exact pair and refuses a second reply for a ticket in the same run.</p></article><article class="card"><span class="number">04</span><h3>Rejection and expiry</h3><p>Reject uses native deny. The prompt forbids retries or alternate delivery routes. Pending requests expire after two minutes or abort with the run, and stale/replayed decisions return 409. Retry policies and stronger durable idempotency would be needed for a production service.</p></article><article class="card"><span class="number">05</span><h3>Errors are explicit</h3><p>Missing ticket is a genuine MCP isError response for fictional T-404. Historyerror deliberately fails the local history fixture, not a real provider. The agent should explain the gap rather than invent previous contacts.</p></article><article class="card"><span class="number">06</span><h3>Automatic local tagging</h3><p>set_priority mutates only the run JSON and is explicitly automatically allowed for this exercise. It is not annotated read-only. Production tagging policies may need additional review.</p></article><article class="card"><span class="number">07</span><h3>Limits and typed output</h3><p>Normal queries allow twelve turns and a $0.35 SDK estimate threshold; estimates can overshoot before being checked. Turnlimit allows one turn and preserves the native error. Structured uses the actual SDK JSON schema output followed by Zod validation.</p></article><article class="card"><span class="number">08</span><h3>Batch and audit</h3><p>Batch makes one fresh SDK query per ticket, sequentially, while sharing this run local JSON. Each sender call requests an independent decision. PostToolUse captures actual responses; approval decisions retain the original and approved body.</p></article><article class="card"><span class="number">09</span><h3>Credentials and privacy</h3><p>Keep the API key only in the private .env or shell. SDK state is disposable; runtime JSON and audits stay local and are excluded from Git. This is a fictional classroom fixture, not comprehensive production DLP or a secure multi-user deployment.</p></article><article class="card"><span class="number">10</span><h3>Primary references</h3><p>https://code.claude.com/docs/en/agent-sdk/custom-tools ; https://code.claude.com/docs/en/agent-sdk/user-input ; https://code.claude.com/docs/en/agent-sdk/hooks ; https://code.claude.com/docs/en/agent-sdk/structured-outputs</p></article></div><section class="step workflow-step" id="workflow-step-01"><span class="number">01</span><h3>1. Validate the experiment</h3><p>Accept only a fixed lesson mode. Browser configuration cannot supply arbitrary paths, endpoints, tool definitions or approval decisions.</p><p class="source">Source: src/protocol.ts · lines 33–41 · selected source; surrounding code omitted</p><pre><code class="language-typescript">if (
+    !input ||
+    Object.keys(input).some((k) =&gt; k !== &quot;mode&quot;) ||
+    !MODES.includes(input.mode)
+  )
+    throw new Error(&quot;Choose a listed triage experiment.&quot;);
+  return { mode: input.mode };
+}</code></pre></section><section class="step workflow-step" id="workflow-step-02"><span class="number">02</span><h3>2. Copy fictional helpdesk data</h3><p>Each run copies a tracked fictional seed into its own ignored runtime JSON. No external helpdesk or real customer is contacted.</p><p class="source">Source: src/helpdesk.ts · lines 44–50 · selected source; surrounding code omitted</p><pre><code class="language-typescript">const file = new URL(&quot;helpdesk.json&quot;, folder),
+    state = JSON.parse(
+      await readFile(
+        new URL(&quot;../fixtures/helpdesk.json&quot;, import.meta.url),
+        &quot;utf8&quot;,
+      ),
+    );</code></pre></section><section class="step workflow-step" id="workflow-step-03"><span class="number">03</span><h3>3. Define the read tool and error response</h3><p>tool() declares a bounded ticket ID and read-only annotation. The shared wrapper returns isError for controlled tool failures, preserving an actual MCP result.</p><p class="source">Source: src/helpdesk.ts · lines 83–91 · selected source; surrounding code omitted</p><pre><code class="language-typescript">const getTicket = tool(
+    &quot;get_ticket&quot;,
+    &quot;Read one fictional support ticket; this cannot send a message.&quot;,
+    { ticketId: z.string().max(30) },
+    wrap(&quot;get_ticket&quot;, async ({ ticketId }) =&gt; ({
+      ...ticket(ticketId),
+      policy:
+        &quot;Fictional classroom data. Investigate duplicate charges without promising a refund. Never request passwords or claim a real message was sent.&quot;,
+    })),</code></pre></section><section class="step workflow-step" id="workflow-step-04"><span class="number">04</span><h3>4. Separate safe tools from the sender</h3><p>Only the two reads and local tagging tool are automatically allowed. send_reply is deliberately absent so native permissions can ask the reviewer.</p><p class="source">Source: src/helpdesk.ts · lines 6–10 · selected source; surrounding code omitted</p><pre><code class="language-typescript">export const SAFE_TOOLS = [
+  &quot;mcp__helpdesk__get_ticket&quot;,
+  &quot;mcp__helpdesk__get_customer_history&quot;,
+  &quot;mcp__helpdesk__set_priority&quot;,
+];</code></pre></section><section class="step workflow-step" id="workflow-step-05"><span class="number">05</span><h3>5. Start the real query with bounded options</h3><p>Use a real SDK query, default permission mode, isolated settings, finite turns and an estimate threshold. No built-in tool or wildcard sender permission is exposed.</p><p class="source">Source: src/agent.ts · lines 254–261 · selected source; surrounding code omitted</p><pre><code class="language-typescript">const run = query({ prompt: input(), options });
+      try {
+        for await (const m of run) {
+          if (m.type === &quot;system&quot; &amp;&amp; m.subtype === &quot;init&quot;)
+            observe(&quot;init&quot;, {
+              ticketId,
+              sessionId: m.session_id,
+              tools: m.tools,</code></pre></section><section class="step workflow-step" id="workflow-step-06"><span class="number">06</span><h3>6. Wait on the native reply permission</h3><p>canUseTool receives the actual ticket, draft and native tool-use ID. It waits on a pending browser approval request; reads and tagging did not wait for this callback.</p><p class="source">Source: src/agent.ts · lines 174–184 · selected source; surrounding code omitted</p><pre><code class="language-typescript">const details = {
+            ticketId,
+            body: input.body,
+            toolUseId: context.toolUseID,
+            repliesBeforeDecision: desk.replies(),
+          };
+          observe(&quot;approval-wait&quot;, details);
+          const decision = provider
+            ? await provider(
+                {
+                  ...details,</code></pre></section><section class="step workflow-step" id="workflow-step-07"><span class="number">07</span><h3>7. Register the one-use approval request</h3><p>Register before emitting the SSE request so a fast reviewer response is not lost. Abort or timeout rejects and removes the waiter. This local teaching UI has no production reviewer authentication.</p><p class="source">Source: src/approvals.ts · lines 64–73 · selected source; surrounding code omitted</p><pre><code class="language-typescript">pending.set(id, settle);
+    timer = setTimeout(abort, timeoutMs);
+    signal.addEventListener(&quot;abort&quot;, abort, { once: true });
+    if (signal.aborted) {
+      abort();
+      return;
+    }
+    emit({
+      type: &quot;approval-request&quot;,
+      request: {</code></pre></section><section class="step workflow-step" id="workflow-step-08"><span class="number">08</span><h3>8. Validate and resolve the browser decision</h3><p>The bounded same-origin JSON route accepts only an existing approval ID and a valid decision. A stale or replayed ID returns 409. Reviewers cannot change the ticket ID.</p><p class="source">Source: src/server.ts · lines 116–123 · selected source; surrounding code omitted</p><pre><code class="language-typescript">const { id, decision } = validateDecision(input);
+        const accepted = resolveApproval(id, decision);
+        res.writeHead(accepted ? 200 : 409, {
+          &quot;Content-Type&quot;: &quot;application/json&quot;,
+        });
+        res.end(JSON.stringify({ accepted }));
+        return;
+      }</code></pre></section><section class="step workflow-step" id="workflow-step-09"><span class="number">09</span><h3>9. Apply the reviewer edit through updatedInput</h3><p>Reject returns the SDK native deny response. Approve or edit grants one exact ticket/body pair and returns updatedInput for that same ticket.</p><p class="source">Source: src/agent.ts · lines 212–223 · selected source; surrounding code omitted</p><pre><code class="language-typescript">if (validated.action === &quot;reject&quot;)
+            return {
+              behavior: &quot;deny&quot;,
+              message:
+                &quot;Reviewer rejected this reply: &quot; +
+                (validated.reason || &quot;Needs revision. Do not retry.&quot;),
+            };
+          const body = row.approvedBody!;
+          desk.ledger.grant(ticketId, body);
+          return { behavior: &quot;allow&quot;, updatedInput: { ticketId, body } };
+        },
+      };</code></pre></section><section class="step workflow-step" id="workflow-step-10"><span class="number">10</span><h3>10. Record only the exact approved reply</h3><p>The handler independently consumes a one-use grant. A changed body or unapproved call is refused. It records only local JSON and explicitly reports that no real message was sent.</p><p class="source">Source: src/helpdesk.ts · lines 136–147 · selected source; surrounding code omitted</p><pre><code class="language-typescript">if (!ledger.consume(ticketId, body))
+        throw new Error(
+          &quot;No matching one-use approval for this exact ticket and reply body.&quot;,
+        );
+      const reply = {
+        ticketId,
+        body,
+        recordedAt: new Date().toISOString(),
+        transport: &quot;local-json-only&quot;,
+      };
+      state.replies.push(reply);
+      await save();</code></pre></section><section class="step workflow-step" id="workflow-step-11"><span class="number">11</span><h3>11. Observe actual post-tool results</h3><p>The native PostToolUse hook records actual tool input and response. Audit records complement the local JSON and reviewer decision; a successful tag is not a sent reply.</p><p class="source">Source: src/agent.ts · lines 145–156 · selected source; surrounding code omitted</p><pre><code class="language-typescript">PostToolUse: [
+            {
+              hooks: [
+                async (i) =&gt; {
+                  if (i.hook_event_name === &quot;PostToolUse&quot;)
+                    observe(&quot;post-tool-use&quot;, {
+                      tool: i.tool_name,
+                      input: i.tool_input,
+                      response: i.tool_response,
+                    });
+                  return {};
+                },</code></pre></section><section class="step workflow-step" id="workflow-step-12"><span class="number">12</span><h3>12. Preserve results and validate typed triage</h3><p>Validate the actual structured output with Zod. A missing field or invalid summary stays a validation error. Batch preserves separate native query results and sessions.</p><p class="source">Source: src/agent.ts · lines 306–309 · selected source; surrounding code omitted</p><pre><code class="language-typescript">Triage.parse(results.at(-1)?.structuredOutput);
+      } catch (e) {
+        validationError = redact(String(e));
+      }</code></pre></section><section class="step workflow-step" id="workflow-step-13"><span class="number">13</span><h3>13. Check approvals against persisted replies</h3><p>Every recorded reply must exactly match an approve/edit decision for its ticket. Retain helpdesk.json and audit.json, then remove only the disposable SDK workspace.</p><p class="source">Source: src/agent.ts · lines 311–320 · selected source; surrounding code omitted</p><pre><code class="language-typescript">const repliesMatchApprovals = state.replies.every((r: any) =&gt;
+      decisions.some(
+        (d) =&gt;
+          d.ticketId === r.ticketId &amp;&amp;
+          d.approvedBody === r.body &amp;&amp;
+          d.action !== &quot;reject&quot;,
+      ),
+    );
+    if (!repliesMatchApprovals)
+      throw new Error(&quot;Local reply has no matching approval record.&quot;);</code></pre></section><footer>CLAUDE AGENT SDK · LESSON 53 · TOOLS · DRAFT · HUMAN REVIEW<br>TypeScript · local runtime · API key stays on the server</footer></main><script src="/navigation.js"></script><script src="/prism.js"></script><script src="/prism-markup.min.js"></script><script src="/prism-yaml.min.js"></script><script src="/prism-markdown.min.js"></script><script src="/prism-python.min.js"></script><script src="/code-highlighting.js"></script><script src="/marked.umd.js"></script><script src="/purify.min.js"></script></body></html>

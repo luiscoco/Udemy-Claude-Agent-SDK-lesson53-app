@@ -1,0 +1,273 @@
+{
+  "lanes": [
+    "Reviewer UI",
+    "TypeScript host",
+    "Agent SDK / MCP",
+    "Local helpdesk JSON",
+    "Evidence / host"
+  ],
+  "arrows": [
+    [
+      0,
+      1,
+      "1. Validate the experiment"
+    ],
+    [
+      1,
+      3,
+      "2. Copy fictional helpdesk data"
+    ],
+    [
+      1,
+      2,
+      "3. Define the read tool and error response"
+    ],
+    [
+      1,
+      2,
+      "4. Separate safe tools from the sender"
+    ],
+    [
+      1,
+      2,
+      "5. Start the real query with bounded options"
+    ],
+    [
+      2,
+      1,
+      "6. Wait on the native reply permission"
+    ],
+    [
+      1,
+      0,
+      "7. Register the one-use approval request"
+    ],
+    [
+      0,
+      1,
+      "8. Validate and resolve the browser decision"
+    ],
+    [
+      1,
+      2,
+      "9. Apply the reviewer edit through updatedInput"
+    ],
+    [
+      2,
+      3,
+      "10. Record only the exact approved reply"
+    ],
+    [
+      2,
+      1,
+      "11. Observe actual post-tool results"
+    ],
+    [
+      2,
+      1,
+      "12. Preserve results and validate typed triage"
+    ],
+    [
+      3,
+      0,
+      "13. Check approvals against persisted replies"
+    ]
+  ],
+  "steps": [
+    {
+      "number": 1,
+      "title": "Validate the experiment",
+      "source": "src/protocol.ts",
+      "code": "if (\n    !input ||\n    Object.keys(input).some((k) => k !== \"mode\") ||\n    !MODES.includes(input.mode)\n  )\n    throw new Error(\"Choose a listed triage experiment.\");\n  return { mode: input.mode };\n}",
+      "language": "typescript",
+      "explanation": "Accept only a fixed lesson mode. Browser configuration cannot supply arbitrary paths, endpoints, tool definitions or approval decisions.",
+      "firstLine": 33,
+      "lastLine": 41,
+      "anchors": [
+        "if ("
+      ],
+      "sourceSHA256": "8ddf83a684d3b6ab2034be291e158bcb140ee9f01dd27a922e83ab296cf71a43",
+      "narration": "Step 1. Accept only a fixed lesson mode. Browser configuration cannot supply arbitrary paths, endpoints, tool definitions or approval decisions. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 2,
+      "title": "Copy fictional helpdesk data",
+      "source": "src/helpdesk.ts",
+      "code": "const file = new URL(\"helpdesk.json\", folder),\n    state = JSON.parse(\n      await readFile(\n        new URL(\"../fixtures/helpdesk.json\", import.meta.url),\n        \"utf8\",\n      ),\n    );",
+      "language": "typescript",
+      "explanation": "Each run copies a tracked fictional seed into its own ignored runtime JSON. No external helpdesk or real customer is contacted.",
+      "firstLine": 44,
+      "lastLine": 50,
+      "anchors": [
+        "const file = new URL(\"helpdesk.json\", folder),"
+      ],
+      "sourceSHA256": "3c4a912dd7859eb66aaf223519fb59b6a568ed7f2cb148e3f8ba26c7e8c23506",
+      "narration": "Step 2. Each run copies a tracked fictional seed into its own ignored runtime JSON. No external helpdesk or real customer is contacted. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 3,
+      "title": "Define the read tool and error response",
+      "source": "src/helpdesk.ts",
+      "code": "const getTicket = tool(\n    \"get_ticket\",\n    \"Read one fictional support ticket; this cannot send a message.\",\n    { ticketId: z.string().max(30) },\n    wrap(\"get_ticket\", async ({ ticketId }) => ({\n      ...ticket(ticketId),\n      policy:\n        \"Fictional classroom data. Investigate duplicate charges without promising a refund. Never request passwords or claim a real message was sent.\",\n    })),",
+      "language": "typescript",
+      "explanation": "tool() declares a bounded ticket ID and read-only annotation. The shared wrapper returns isError for controlled tool failures, preserving an actual MCP result.",
+      "firstLine": 83,
+      "lastLine": 91,
+      "anchors": [
+        "const getTicket = tool("
+      ],
+      "sourceSHA256": "3c4a912dd7859eb66aaf223519fb59b6a568ed7f2cb148e3f8ba26c7e8c23506",
+      "narration": "Step 3. tool() declares a bounded ticket ID and read-only annotation. The shared wrapper returns isError for controlled tool failures, preserving an actual MCP result. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 4,
+      "title": "Separate safe tools from the sender",
+      "source": "src/helpdesk.ts",
+      "code": "export const SAFE_TOOLS = [\n  \"mcp__helpdesk__get_ticket\",\n  \"mcp__helpdesk__get_customer_history\",\n  \"mcp__helpdesk__set_priority\",\n];",
+      "language": "typescript",
+      "explanation": "Only the two reads and local tagging tool are automatically allowed. send_reply is deliberately absent so native permissions can ask the reviewer.",
+      "firstLine": 6,
+      "lastLine": 10,
+      "anchors": [
+        "export const SAFE_TOOLS = ["
+      ],
+      "sourceSHA256": "3c4a912dd7859eb66aaf223519fb59b6a568ed7f2cb148e3f8ba26c7e8c23506",
+      "narration": "Step 4. Only the two reads and local tagging tool are automatically allowed. send_reply is deliberately absent so native permissions can ask the reviewer. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 5,
+      "title": "Start the real query with bounded options",
+      "source": "src/agent.ts",
+      "code": "const run = query({ prompt: input(), options });\n      try {\n        for await (const m of run) {\n          if (m.type === \"system\" && m.subtype === \"init\")\n            observe(\"init\", {\n              ticketId,\n              sessionId: m.session_id,\n              tools: m.tools,",
+      "language": "typescript",
+      "explanation": "Use a real SDK query, default permission mode, isolated settings, finite turns and an estimate threshold. No built-in tool or wildcard sender permission is exposed.",
+      "firstLine": 254,
+      "lastLine": 261,
+      "anchors": [
+        "const run = query({ prompt: input(), options });"
+      ],
+      "sourceSHA256": "e1adbdc5c9dc94f0d95708da481eaf0d8b71619af00496b5c3b33be7ad87fc8c",
+      "narration": "Step 5. Use a real SDK query, default permission mode, isolated settings, finite turns and an estimate threshold. No built-in tool or wildcard sender permission is exposed. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 6,
+      "title": "Wait on the native reply permission",
+      "source": "src/agent.ts",
+      "code": "const details = {\n            ticketId,\n            body: input.body,\n            toolUseId: context.toolUseID,\n            repliesBeforeDecision: desk.replies(),\n          };\n          observe(\"approval-wait\", details);\n          const decision = provider\n            ? await provider(\n                {\n                  ...details,",
+      "language": "typescript",
+      "explanation": "canUseTool receives the actual ticket, draft and native tool-use ID. It waits on a pending browser approval request; reads and tagging did not wait for this callback.",
+      "firstLine": 174,
+      "lastLine": 184,
+      "anchors": [
+        "const details = {"
+      ],
+      "sourceSHA256": "e1adbdc5c9dc94f0d95708da481eaf0d8b71619af00496b5c3b33be7ad87fc8c",
+      "narration": "Step 6. canUseTool receives the actual ticket, draft and native tool-use ID. It waits on a pending browser approval request; reads and tagging did not wait for this callback. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 7,
+      "title": "Register the one-use approval request",
+      "source": "src/approvals.ts",
+      "code": "pending.set(id, settle);\n    timer = setTimeout(abort, timeoutMs);\n    signal.addEventListener(\"abort\", abort, { once: true });\n    if (signal.aborted) {\n      abort();\n      return;\n    }\n    emit({\n      type: \"approval-request\",\n      request: {",
+      "language": "typescript",
+      "explanation": "Register before emitting the SSE request so a fast reviewer response is not lost. Abort or timeout rejects and removes the waiter. This local teaching UI has no production reviewer authentication.",
+      "firstLine": 64,
+      "lastLine": 73,
+      "anchors": [
+        "pending.set(id, settle);"
+      ],
+      "sourceSHA256": "4d7bfb6c6e92708207eb73ec14dc767d7daf4ab1ee02fbab42740452bae6a9ea",
+      "narration": "Step 7. Register before emitting the SSE request so a fast reviewer response is not lost. Abort or timeout rejects and removes the waiter. This local teaching UI has no production reviewer authentication. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 8,
+      "title": "Validate and resolve the browser decision",
+      "source": "src/server.ts",
+      "code": "const { id, decision } = validateDecision(input);\n        const accepted = resolveApproval(id, decision);\n        res.writeHead(accepted ? 200 : 409, {\n          \"Content-Type\": \"application/json\",\n        });\n        res.end(JSON.stringify({ accepted }));\n        return;\n      }",
+      "language": "typescript",
+      "explanation": "The bounded same-origin JSON route accepts only an existing approval ID and a valid decision. A stale or replayed ID returns 409. Reviewers cannot change the ticket ID.",
+      "firstLine": 116,
+      "lastLine": 123,
+      "anchors": [
+        "const { id, decision } = validateDecision(input);"
+      ],
+      "sourceSHA256": "63171ab27bac3e0ebd0fd53a3f5aa8ff925f65f8d73d330b46b8d4d4ae535182",
+      "narration": "Step 8. The bounded same-origin JSON route accepts only an existing approval ID and a valid decision. A stale or replayed ID returns 409. Reviewers cannot change the ticket ID. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 9,
+      "title": "Apply the reviewer edit through updatedInput",
+      "source": "src/agent.ts",
+      "code": "if (validated.action === \"reject\")\n            return {\n              behavior: \"deny\",\n              message:\n                \"Reviewer rejected this reply: \" +\n                (validated.reason || \"Needs revision. Do not retry.\"),\n            };\n          const body = row.approvedBody!;\n          desk.ledger.grant(ticketId, body);\n          return { behavior: \"allow\", updatedInput: { ticketId, body } };\n        },\n      };",
+      "language": "typescript",
+      "explanation": "Reject returns the SDK native deny response. Approve or edit grants one exact ticket/body pair and returns updatedInput for that same ticket.",
+      "firstLine": 212,
+      "lastLine": 223,
+      "anchors": [
+        "if (validated.action === \"reject\")"
+      ],
+      "sourceSHA256": "e1adbdc5c9dc94f0d95708da481eaf0d8b71619af00496b5c3b33be7ad87fc8c",
+      "narration": "Step 9. Reject returns the SDK native deny response. Approve or edit grants one exact ticket/body pair and returns updatedInput for that same ticket. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 10,
+      "title": "Record only the exact approved reply",
+      "source": "src/helpdesk.ts",
+      "code": "if (!ledger.consume(ticketId, body))\n        throw new Error(\n          \"No matching one-use approval for this exact ticket and reply body.\",\n        );\n      const reply = {\n        ticketId,\n        body,\n        recordedAt: new Date().toISOString(),\n        transport: \"local-json-only\",\n      };\n      state.replies.push(reply);\n      await save();",
+      "language": "typescript",
+      "explanation": "The handler independently consumes a one-use grant. A changed body or unapproved call is refused. It records only local JSON and explicitly reports that no real message was sent.",
+      "firstLine": 136,
+      "lastLine": 147,
+      "anchors": [
+        "if (!ledger.consume(ticketId, body))"
+      ],
+      "sourceSHA256": "3c4a912dd7859eb66aaf223519fb59b6a568ed7f2cb148e3f8ba26c7e8c23506",
+      "narration": "Step 10. The handler independently consumes a one-use grant. A changed body or unapproved call is refused. It records only local JSON and explicitly reports that no real message was sent. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 11,
+      "title": "Observe actual post-tool results",
+      "source": "src/agent.ts",
+      "code": "PostToolUse: [\n            {\n              hooks: [\n                async (i) => {\n                  if (i.hook_event_name === \"PostToolUse\")\n                    observe(\"post-tool-use\", {\n                      tool: i.tool_name,\n                      input: i.tool_input,\n                      response: i.tool_response,\n                    });\n                  return {};\n                },",
+      "language": "typescript",
+      "explanation": "The native PostToolUse hook records actual tool input and response. Audit records complement the local JSON and reviewer decision; a successful tag is not a sent reply.",
+      "firstLine": 145,
+      "lastLine": 156,
+      "anchors": [
+        "PostToolUse: ["
+      ],
+      "sourceSHA256": "e1adbdc5c9dc94f0d95708da481eaf0d8b71619af00496b5c3b33be7ad87fc8c",
+      "narration": "Step 11. The native PostToolUse hook records actual tool input and response. Audit records complement the local JSON and reviewer decision; a successful tag is not a sent reply. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 12,
+      "title": "Preserve results and validate typed triage",
+      "source": "src/agent.ts",
+      "code": "Triage.parse(results.at(-1)?.structuredOutput);\n      } catch (e) {\n        validationError = redact(String(e));\n      }",
+      "language": "typescript",
+      "explanation": "Validate the actual structured output with Zod. A missing field or invalid summary stays a validation error. Batch preserves separate native query results and sessions.",
+      "firstLine": 306,
+      "lastLine": 309,
+      "anchors": [
+        "Triage.parse(results.at(-1)?.structuredOutput);"
+      ],
+      "sourceSHA256": "e1adbdc5c9dc94f0d95708da481eaf0d8b71619af00496b5c3b33be7ad87fc8c",
+      "narration": "Step 12. Validate the actual structured output with Zod. A missing field or invalid summary stays a validation error. Batch preserves separate native query results and sessions. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 13,
+      "title": "Check approvals against persisted replies",
+      "source": "src/agent.ts",
+      "code": "const repliesMatchApprovals = state.replies.every((r: any) =>\n      decisions.some(\n        (d) =>\n          d.ticketId === r.ticketId &&\n          d.approvedBody === r.body &&\n          d.action !== \"reject\",\n      ),\n    );\n    if (!repliesMatchApprovals)\n      throw new Error(\"Local reply has no matching approval record.\");",
+      "language": "typescript",
+      "explanation": "Every recorded reply must exactly match an approve/edit decision for its ticket. Retain helpdesk.json and audit.json, then remove only the disposable SDK workspace.",
+      "firstLine": 311,
+      "lastLine": 320,
+      "anchors": [
+        "const repliesMatchApprovals = state.replies.every((r: any) =>"
+      ],
+      "sourceSHA256": "e1adbdc5c9dc94f0d95708da481eaf0d8b71619af00496b5c3b33be7ad87fc8c",
+      "narration": "Step 13. Every recorded reply must exactly match an approve/edit decision for its ticket. Retain helpdesk.json and audit.json, then remove only the disposable SDK workspace. This source excerpt shows the corresponding application statement."
+    }
+  ]
+}

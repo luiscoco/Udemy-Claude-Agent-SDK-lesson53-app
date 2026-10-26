@@ -1,0 +1,29 @@
+{
+  "tickets": [
+    {
+      "id": "T-4821",
+      "customerId": "C-101",
+      "subject": "Duplicate classroom invoice charge",
+      "body": "My fictional training invoice appears twice. Please investigate the duplicate charge.",
+      "priority": "normal",
+      "category": "technical"
+    },
+    {
+      "id": "T-4822",
+      "customerId": "C-102",
+      "subject": "Cannot sign in to training portal",
+      "body": "I cannot sign in after resetting my password. I need access to my classroom exercises.",
+      "priority": "normal",
+      "category": "technical"
+    }
+  ],
+  "history": {
+    "C-101": [
+      "Fictional customer reported an invoice question last month. No refund has been authorized."
+    ],
+    "C-102": [
+      "Fictional customer enrolled in the training portal yesterday."
+    ]
+  },
+  "replies": []
+}
