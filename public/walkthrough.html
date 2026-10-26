@@ -56,7 +56,7 @@
         });
         res.end(JSON.stringify({ accepted }));
         return;
-      }</code></pre></section><section class="step workflow-step" id="workflow-step-09"><span class="number">09</span><h3>9. Apply the reviewer edit through updatedInput</h3><p>Reject returns the SDK native deny response. Approve or edit grants one exact ticket/body pair and returns updatedInput for that same ticket.</p><p class="source">Source: src/agent.ts · lines 212–223 · selected source; surrounding code omitted</p><pre><code class="language-typescript">if (validated.action === &quot;reject&quot;)
+      }</code></pre></section><section class="step workflow-step" id="workflow-step-09"><span class="number">09</span><h3>9. Apply the reviewer edit through updatedInput</h3><p>Reject returns the SDK native deny response. Approve or edit grants one exact ticket/body pair and returns updatedInput for that same ticket.</p><p class="source">Source: src/agent.ts · lines 212–221 · selected source; surrounding code omitted</p><pre><code class="language-typescript">if (validated.action === &quot;reject&quot;)
             return {
               behavior: &quot;deny&quot;,
               message:
@@ -65,9 +65,7 @@
             };
           const body = row.approvedBody!;
           desk.ledger.grant(ticketId, body);
-          return { behavior: &quot;allow&quot;, updatedInput: { ticketId, body } };
-        },
-      };</code></pre></section><section class="step workflow-step" id="workflow-step-10"><span class="number">10</span><h3>10. Record only the exact approved reply</h3><p>The handler independently consumes a one-use grant. A changed body or unapproved call is refused. It records only local JSON and explicitly reports that no real message was sent.</p><p class="source">Source: src/helpdesk.ts · lines 136–147 · selected source; surrounding code omitted</p><pre><code class="language-typescript">if (!ledger.consume(ticketId, body))
+          return { behavior: &quot;allow&quot;, updatedInput: { ticketId, body } };</code></pre></section><section class="step workflow-step" id="workflow-step-10"><span class="number">10</span><h3>10. Record only the exact approved reply</h3><p>The handler independently consumes a one-use grant. A changed body or unapproved call is refused. It records only local JSON and explicitly reports that no real message was sent.</p><p class="source">Source: src/helpdesk.ts · lines 136–147 · selected source; surrounding code omitted</p><pre><code class="language-typescript">if (!ledger.consume(ticketId, body))
         throw new Error(
           &quot;No matching one-use approval for this exact ticket and reply body.&quot;,
         );

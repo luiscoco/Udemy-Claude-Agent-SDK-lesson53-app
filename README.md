@@ -214,7 +214,7 @@ const { id, decision } = validateDecision(input);
 
 Reject returns the SDK native deny response. Approve or edit grants one exact ticket/body pair and returns updatedInput for that same ticket.
 
-Source: `src/agent.ts`, selected lines 212–223. Surrounding code omitted.
+Source: `src/agent.ts`, selected lines 212–221. Surrounding code omitted.
 
 ```typescript
 if (validated.action === "reject")
@@ -227,8 +227,6 @@ if (validated.action === "reject")
           const body = row.approvedBody!;
           desk.ledger.grant(ticketId, body);
           return { behavior: "allow", updatedInput: { ticketId, body } };
-        },
-      };
 ```
 
 ### 10. Record only the exact approved reply

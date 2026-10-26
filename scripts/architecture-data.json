@@ -198,11 +198,11 @@
       "number": 9,
       "title": "Apply the reviewer edit through updatedInput",
       "source": "src/agent.ts",
-      "code": "if (validated.action === \"reject\")\n            return {\n              behavior: \"deny\",\n              message:\n                \"Reviewer rejected this reply: \" +\n                (validated.reason || \"Needs revision. Do not retry.\"),\n            };\n          const body = row.approvedBody!;\n          desk.ledger.grant(ticketId, body);\n          return { behavior: \"allow\", updatedInput: { ticketId, body } };\n        },\n      };",
+      "code": "if (validated.action === \"reject\")\n            return {\n              behavior: \"deny\",\n              message:\n                \"Reviewer rejected this reply: \" +\n                (validated.reason || \"Needs revision. Do not retry.\"),\n            };\n          const body = row.approvedBody!;\n          desk.ledger.grant(ticketId, body);\n          return { behavior: \"allow\", updatedInput: { ticketId, body } };",
       "language": "typescript",
       "explanation": "Reject returns the SDK native deny response. Approve or edit grants one exact ticket/body pair and returns updatedInput for that same ticket.",
       "firstLine": 212,
-      "lastLine": 223,
+      "lastLine": 221,
       "anchors": [
         "if (validated.action === \"reject\")"
       ],
